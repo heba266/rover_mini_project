@@ -24,7 +24,7 @@ class WheelOdometryNode(LifecycleNode):
         
         self.wheel_d = 0.0
         self.ticks_per_rev = 0.0
-        self.rate = 0.0
+        self.update_rate = 0.0
         self.publish_tf = True
         self.MIN_ENC = -32768
         self.MAX_ENC = 32768
@@ -64,11 +64,7 @@ class WheelOdometryNode(LifecycleNode):
             
             self.odom_pub = self.create_lifecycle_publisher(Odometry,'/odom',10)
             self.tf_broadcaster = TransformBroadcaster(self)
-            self.enc_sub = self.create_subscription(Int16,'/front_ticks',self.handle_enc,10)
-            self.yaw_sub = self.create_subscription(Float32,'/yaw', self.handle_yaw, 10)
-            self.motion_sub = self.create_subscription(Int8,'/motion',self.handle_motion,10)
-            self.timer = self.create_timer(1.0 / self.update_rate,self.publish_odom)
-            self.timer.cancel()
+            
             self.get_logger().info("Node configured successfully (inactive)")
             return TransitionCallbackReturn.SUCCESS
             
@@ -78,31 +74,77 @@ class WheelOdometryNode(LifecycleNode):
 
     def on_activate(self, state):
         self.get_logger().info("Activating node")
+        
         if self.odom_pub:
             self.odom_pub.activate()
-        if self.timer:
-            self.timer.reset()
-        self.reset_state()
-        return TransitionCallbackReturn.SUCCESS
+        
+        try:
+            self.enc_sub = self.create_subscription(Int16,'/front_ticks',self.handle_enc,10)
+            self.yaw_sub = self.create_subscription(Float32,'/yaw', self.handle_yaw, 10)
+            self.motion_sub = self.create_subscription(Int8,'/motion',self.handle_motion,10)
+            self.timer = self.create_timer(1.0 / self.update_rate,self.publish_odom)
+            self.reset_state()
+            self.get_logger().info("Node activated successfully")
+            return TransitionCallbackReturn.SUCCESS
+            
+        except Exception as e:
+            self.get_logger().error(f"Activation failed: {str(e)}")
+            return TransitionCallbackReturn.FAILURE
 
     def on_deactivate(self, state):
         self.get_logger().info("Deactivating node")
+        
         if self.odom_pub:
             self.odom_pub.deactivate()
+        
+        if self.enc_sub:
+            self.destroy_subscription(self.enc_sub)
+            self.enc_sub = None
+        
+        if self.yaw_sub:
+            self.destroy_subscription(self.yaw_sub)
+            self.yaw_sub = None
+        
+        if self.motion_sub:
+            self.destroy_subscription(self.motion_sub)
+            self.motion_sub = None
+        
         if self.timer:
-            self.timer.cancel()
+            self.destroy_timer(self.timer)
+            self.timer = None
+        
         return TransitionCallbackReturn.SUCCESS
 
     def on_cleanup(self, state):
         self.get_logger().info("Cleaning up node")
-        self.destroy_publisher(self.odom_pub)
-        self.destroy_subscription(self.enc_sub)
-        self.destroy_subscription(self.yaw_sub)
-        self.destroy_subscription(self.motion_sub)
-        self.destroy_timer(self.timer)
+        
+        if self.odom_pub:
+            self.destroy_publisher(self.odom_pub)
+            self.odom_pub = None
+        
+        if self.tf_broadcaster:
+            self.tf_broadcaster = None
+        
+        if self.enc_sub:
+            self.destroy_subscription(self.enc_sub)
+            self.enc_sub = None
+        
+        if self.yaw_sub:
+            self.destroy_subscription(self.yaw_sub)
+            self.yaw_sub = None
+        
+        if self.motion_sub:
+            self.destroy_subscription(self.motion_sub)
+            self.motion_sub = None
+        
+        if self.timer:
+            self.destroy_timer(self.timer)
+            self.timer = None
+        
         return TransitionCallbackReturn.SUCCESS
 
     def on_shutdown(self, state):
+        self.get_logger().info("Shutting down node")
         return self.on_cleanup(state)
 
     def reset_state(self):
@@ -172,7 +214,7 @@ class WheelOdometryNode(LifecycleNode):
         odom_msg.pose.pose.orientation.y = quat[1]
         odom_msg.pose.pose.orientation.z = quat[2]
         odom_msg.pose.pose.orientation.w = quat[3]
-        odom_msg.twist.twist.linear.x = delta_dist * self.rate
+        odom_msg.twist.twist.linear.x = delta_dist * self.update_rate
         self.odom_pub.publish(odom_msg)
         if self.publish_tf:
             tf = TransformStamped()
