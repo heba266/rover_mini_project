@@ -1,4 +1,6 @@
 from setuptools import setup
+import os
+from glob import glob
 
 package_name = 'wheel_odometry_pkg'
 
@@ -10,6 +12,7 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
+        (os.path.join('share', package_name, 'launch'), glob('launch/*.py')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -20,8 +23,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'wheel_odometry_node = wheel_odometry_pkg.wheelOdometryNode:main',
-            'wheel_odometry_node = wheel_odometry_pkg.wheelOdometryNodeCooked:main'
+            'turtlebot4_converter = wheel_odometry_pkg.turtlebot4_converter:main',
+            'wheel_odometry_node = wheel_odometry_pkg.wheel_odometry_node:main',
         ],
     },
 )

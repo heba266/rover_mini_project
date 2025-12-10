@@ -1,0 +1,46 @@
+[1.154s] Invoking command in '/home/pola-nasser13/wheel_odometry_ws/src/wheel_odometry_pkg': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/pola-nasser13/wheel_odometry_ws/build/wheel_odometry_pkg/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/pola-nasser13/wheel_odometry_ws/install/wheel_odometry_pkg/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/wheel_odometry_pkg build --build-base /home/pola-nasser13/wheel_odometry_ws/build/wheel_odometry_pkg/build install --record /home/pola-nasser13/wheel_odometry_ws/build/wheel_odometry_pkg/install.log --single-version-externally-managed install_data
+[1.347s] running egg_info
+[1.347s] creating ../../build/wheel_odometry_pkg/wheel_odometry_pkg.egg-info
+[1.357s] writing ../../build/wheel_odometry_pkg/wheel_odometry_pkg.egg-info/PKG-INFO
+[1.357s] writing dependency_links to ../../build/wheel_odometry_pkg/wheel_odometry_pkg.egg-info/dependency_links.txt
+[1.358s] writing entry points to ../../build/wheel_odometry_pkg/wheel_odometry_pkg.egg-info/entry_points.txt
+[1.358s] writing requirements to ../../build/wheel_odometry_pkg/wheel_odometry_pkg.egg-info/requires.txt
+[1.358s] writing top-level names to ../../build/wheel_odometry_pkg/wheel_odometry_pkg.egg-info/top_level.txt
+[1.358s] writing manifest file '../../build/wheel_odometry_pkg/wheel_odometry_pkg.egg-info/SOURCES.txt'
+[1.379s] reading manifest file '../../build/wheel_odometry_pkg/wheel_odometry_pkg.egg-info/SOURCES.txt'
+[1.379s] writing manifest file '../../build/wheel_odometry_pkg/wheel_odometry_pkg.egg-info/SOURCES.txt'
+[1.379s] running build
+[1.379s] running build_py
+[1.379s] creating /home/pola-nasser13/wheel_odometry_ws/build/wheel_odometry_pkg/build
+[1.379s] creating /home/pola-nasser13/wheel_odometry_ws/build/wheel_odometry_pkg/build/lib
+[1.380s] creating /home/pola-nasser13/wheel_odometry_ws/build/wheel_odometry_pkg/build/lib/wheel_odometry_pkg
+[1.380s] copying wheel_odometry_pkg/__init__.py -> /home/pola-nasser13/wheel_odometry_ws/build/wheel_odometry_pkg/build/lib/wheel_odometry_pkg
+[1.380s] copying wheel_odometry_pkg/wheel_odometry_node.py -> /home/pola-nasser13/wheel_odometry_ws/build/wheel_odometry_pkg/build/lib/wheel_odometry_pkg
+[1.380s] copying wheel_odometry_pkg/wheel_odometry_node_cooked.py -> /home/pola-nasser13/wheel_odometry_ws/build/wheel_odometry_pkg/build/lib/wheel_odometry_pkg
+[1.380s] copying wheel_odometry_pkg/turtlebot4_converter.py -> /home/pola-nasser13/wheel_odometry_ws/build/wheel_odometry_pkg/build/lib/wheel_odometry_pkg
+[1.380s] running install
+[1.383s] running install_lib
+[1.394s] creating /home/pola-nasser13/wheel_odometry_ws/install/wheel_odometry_pkg/lib/python3.12/site-packages/wheel_odometry_pkg
+[1.394s] copying /home/pola-nasser13/wheel_odometry_ws/build/wheel_odometry_pkg/build/lib/wheel_odometry_pkg/__init__.py -> /home/pola-nasser13/wheel_odometry_ws/install/wheel_odometry_pkg/lib/python3.12/site-packages/wheel_odometry_pkg
+[1.394s] copying /home/pola-nasser13/wheel_odometry_ws/build/wheel_odometry_pkg/build/lib/wheel_odometry_pkg/wheel_odometry_node.py -> /home/pola-nasser13/wheel_odometry_ws/install/wheel_odometry_pkg/lib/python3.12/site-packages/wheel_odometry_pkg
+[1.394s] copying /home/pola-nasser13/wheel_odometry_ws/build/wheel_odometry_pkg/build/lib/wheel_odometry_pkg/wheel_odometry_node_cooked.py -> /home/pola-nasser13/wheel_odometry_ws/install/wheel_odometry_pkg/lib/python3.12/site-packages/wheel_odometry_pkg
+[1.394s] copying /home/pola-nasser13/wheel_odometry_ws/build/wheel_odometry_pkg/build/lib/wheel_odometry_pkg/turtlebot4_converter.py -> /home/pola-nasser13/wheel_odometry_ws/install/wheel_odometry_pkg/lib/python3.12/site-packages/wheel_odometry_pkg
+[1.394s] byte-compiling /home/pola-nasser13/wheel_odometry_ws/install/wheel_odometry_pkg/lib/python3.12/site-packages/wheel_odometry_pkg/__init__.py to __init__.cpython-312.pyc
+[1.394s] byte-compiling /home/pola-nasser13/wheel_odometry_ws/install/wheel_odometry_pkg/lib/python3.12/site-packages/wheel_odometry_pkg/wheel_odometry_node.py to wheel_odometry_node.cpython-312.pyc
+[1.396s] byte-compiling /home/pola-nasser13/wheel_odometry_ws/install/wheel_odometry_pkg/lib/python3.12/site-packages/wheel_odometry_pkg/wheel_odometry_node_cooked.py to wheel_odometry_node_cooked.cpython-312.pyc
+[1.397s] byte-compiling /home/pola-nasser13/wheel_odometry_ws/install/wheel_odometry_pkg/lib/python3.12/site-packages/wheel_odometry_pkg/turtlebot4_converter.py to turtlebot4_converter.cpython-312.pyc
+[1.397s] running install_data
+[1.397s] creating /home/pola-nasser13/wheel_odometry_ws/install/wheel_odometry_pkg/share/ament_index
+[1.397s] creating /home/pola-nasser13/wheel_odometry_ws/install/wheel_odometry_pkg/share/ament_index/resource_index
+[1.397s] creating /home/pola-nasser13/wheel_odometry_ws/install/wheel_odometry_pkg/share/ament_index/resource_index/packages
+[1.398s] copying resource/wheel_odometry_pkg -> /home/pola-nasser13/wheel_odometry_ws/install/wheel_odometry_pkg/share/ament_index/resource_index/packages
+[1.398s] copying package.xml -> /home/pola-nasser13/wheel_odometry_ws/install/wheel_odometry_pkg/share/wheel_odometry_pkg
+[1.398s] creating /home/pola-nasser13/wheel_odometry_ws/install/wheel_odometry_pkg/share/wheel_odometry_pkg/launch
+[1.398s] copying launch/wheel_odometry.launch.py -> /home/pola-nasser13/wheel_odometry_ws/install/wheel_odometry_pkg/share/wheel_odometry_pkg/launch
+[1.398s] running install_egg_info
+[1.409s] Copying ../../build/wheel_odometry_pkg/wheel_odometry_pkg.egg-info to /home/pola-nasser13/wheel_odometry_ws/install/wheel_odometry_pkg/lib/python3.12/site-packages/wheel_odometry_pkg-0.0.1-py3.12.egg-info
+[1.409s] running install_scripts
+[1.478s] Installing turtlebot4_converter script to /home/pola-nasser13/wheel_odometry_ws/install/wheel_odometry_pkg/lib/wheel_odometry_pkg
+[1.478s] Installing wheel_odometry_node script to /home/pola-nasser13/wheel_odometry_ws/install/wheel_odometry_pkg/lib/wheel_odometry_pkg
+[1.478s] writing list of installed files to '/home/pola-nasser13/wheel_odometry_ws/build/wheel_odometry_pkg/install.log'
+[1.493s] Invoked command in '/home/pola-nasser13/wheel_odometry_ws/src/wheel_odometry_pkg' returned '0': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/pola-nasser13/wheel_odometry_ws/build/wheel_odometry_pkg/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/pola-nasser13/wheel_odometry_ws/install/wheel_odometry_pkg/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/wheel_odometry_pkg build --build-base /home/pola-nasser13/wheel_odometry_ws/build/wheel_odometry_pkg/build install --record /home/pola-nasser13/wheel_odometry_ws/build/wheel_odometry_pkg/install.log --single-version-externally-managed install_data
