@@ -1,0 +1,5 @@
+geometry_msgs/PoseStamped goal_pose
+---
+nav_msgs/Path path
+---
+nav_msgs/Path partial_path
