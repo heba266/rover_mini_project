@@ -13,6 +13,8 @@ class LocalCostMap(LifecycleNode):
         
         self.declare_parameter("map_resolution", 0.05)
         self.declare_parameter("map_size", 200)
+        self.declare_parameter("inflation_grid_radius", 3)
+
 
         self.map_resolution = None
         self.map_size = None
@@ -22,6 +24,8 @@ class LocalCostMap(LifecycleNode):
         self.tf_listener = None
         self.lidar_sub_ = None
         self.map_pub_ = None
+        self.obstacle_index = None
+         
 
         
     def on_configure(self, state: LifecycleState):
@@ -29,11 +33,15 @@ class LocalCostMap(LifecycleNode):
 
         self.lidar_sub_ = self.create_subscription(LaserScan, '/scan', self.lidar_callback, 10)
         self.map_pub_ = self.create_lifecycle_publisher(OccupancyGrid, '/costmap', 10)
+        
 
         self.map_resolution = self.get_parameter("map_resolution").value
         self.map_size = self.get_parameter("map_size").value
+        self.inflation_grid_radius = self.get_parameter("inflation_grid_radius").value
         self.map_center = self.map_size // 2
         self.map = np.zeros((self.map_size, self.map_size), dtype=np.int8)
+        self.obstacle_index = []
+
 
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
@@ -105,7 +113,11 @@ class LocalCostMap(LifecycleNode):
  
             if (0 <= grid_y < self.map_size and 0 <= grid_x < self.map_size):
                 self.map[grid_y][grid_x] = 100
+                self.obstacle_index.append((grid_y, grid_x))
+
+        self.apply_inflation()
         
+
         grid = OccupancyGrid()
         grid.header.stamp = self.get_clock().now().to_msg()
         grid.header.frame_id = "odom"
@@ -119,6 +131,33 @@ class LocalCostMap(LifecycleNode):
 
         self.map_pub_.publish(grid)
         
+    def apply_inflation(self):
+        r = self.inflation_grid_radius
+        for obs_y, obs_x in self.obstacle_index:
+
+            for dy in range(-r, r+1):
+                for dx in range(-r, r+1):
+                    ny, nx = dy+obs_y , dx+obs_x
+
+                    distance = math.sqrt(dx**2+dy**2)
+                    if distance <= r:
+                        cost = int(100 - (10*distance))
+
+                        if 0 <= nx < self.map_size and 0 <= ny < self.map_size:
+                            self.map[ny][nx] = cost if self.map[ny][nx] < cost else self.map[ny][nx]
+        self.obstacle_index.clear()
+        
+
+
+
+
+
+
+
+
+
+
+
 
 def main(args=None):
     rclpy.init(args=args)
