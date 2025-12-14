@@ -1,0 +1,2 @@
+[console_scripts]
+pid_task = pid_task.task:main
