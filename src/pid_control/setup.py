@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'pid'
+package_name = 'pid_control'
 
 setup(
     name=package_name,
@@ -24,8 +24,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            "pid = pid.pid:main", 
-
+                'pid = pid_control.pid:main',
         ],
     },
 )
