@@ -1,94 +1,122 @@
 import rclpy
-from rclpy.node import Node
-from rclpy.action import ActionServer
 from rclpy.lifecycle import LifecycleNode, TransitionCallbackReturn
+from rclpy.action import ActionServer
 from geometry_msgs.msg import PoseStamped, Point
 from nav_msgs.msg import Path, OccupancyGrid, Odometry
 from interface.action import Plan
-import numpy as np
 import heapq
 import math
+
 
 class Planner(LifecycleNode):
     def __init__(self):
         super().__init__('planner')
-        self.declare_parameter('planner_type','AStar')
+
         self.declare_parameter('path_resolution', 0.05)
+        self.declare_parameter('obstacle_weight', 0.1)
 
         self.current_costmap = None
         self.current_pose = None
+        self.action_server = None
 
-        self.get_logger().info("Planner Node Created.")
-
-        # subscriptions
-        self.costmap_sub = self.create_subscription(OccupancyGrid, '/costmap', self.costmap_callback, 10)
-        self.odom_sub = self.create_subscription(Odometry, '/odom', self.odom_callback, 10)
-        self.path_pub = self.create_publisher(Path, '/planner', 10)
-
-        # action server
-        self.action_server = ActionServer(self, Plan, 'plan', self.execute_callback)
+        self.get_logger().info('Planner Node Created')
 
     # callbacks
     def costmap_callback(self, msg):
+        if self.current_state().label != 'active':
+            return;
         self.current_costmap = msg
 
     def odom_callback(self, msg):
+        if self.current_state().label != 'active':
+            return;
         self.current_pose = msg.pose.pose
 
+    # lifecycle
+    def on_configure(self, state):
+        self.costmap_sub = self.create_subscription(OccupancyGrid, '/costmap', self.costmap_callback, 10)
+
+        self.odom_sub = self.create_subscription(Odometry, '/odom', self.odom_callback, 10)
+
+        self.path_pub = self.create_lifecycle_publisher(Path, '/planner', 10)
+
+        # self.action_server = ActionServer(self, Plan, 'plan', self.execute_callback)
+
+        self.get_logger().info('Planner configured')
+        return TransitionCallbackReturn.SUCCESS
+
+    def on_activate(self, state):
+        self.path_pub = self.create_lifecycle_publisher(Path,'/planner',10)
+
+        self.action_server = ActionServer(self, Plan, 'plan', self.execute_callback)
+
+        self.get_logger().info('Planner activated')
+        return TransitionCallbackReturn.SUCCESS
+
+    def on_deactivate(self, state):
+        self.path_pub.on_deactivate()
+
+        if self.action_server:
+            self.action_server.destroy()
+            self.action_server = None
+
+        return TransitionCallbackReturn.SUCCESS
+
+    def on_cleanup(self, state):
+        return TransitionCallbackReturn.SUCCESS
+
+    def on_shutdown(self, state):
+        return TransitionCallbackReturn.SUCCESS
+
+    # action
     def execute_callback(self, goal_handle):
+        if self.current_state().label != 'active':
+            goal_handle.abort()
+            self.get_logger().info("Goal rejected : planner not active")
+            return Plan.Result();
+        if self.current_costmap is None or self.current_pose is None:
+            goal_handle.abort()
+            return Plan.Result()
+
         goal_pose = goal_handle.request.goal_pose.pose
-        goal_x = goal_pose.position.x
-        goal_y = goal_pose.position.y
+        start = self.to_grid((
+            self.current_pose.position.x,
+            self.current_pose.position.y))
 
-        if self.current_costmap is None:
-            self.get_logger().info("No costmap received yet")
-            goal_handle.abort()
-            return None
-        if self.current_pose is None:
-            self.get_logger().info("No current pose received yet")
-            goal_handle.abort()
-            return None
+        goal = self.to_grid((
+            goal_pose.position.x,
+            goal_pose.position.y))
 
-        start_x = self.current_pose.position.x
-        start_y = self.current_pose.position.y
-        self.get_logger().info(f"Planning from ({start_x:.2f},{start_y:.2f}) to ({goal_x:.2f},{goal_y:.2f})")
-
-        # convert to grid
-        start_grid = self.to_grid((start_x, start_y))
-        goal_grid = self.to_grid((goal_x, goal_y))
-
-        # plan
-        path_grid = self.a_star(start_grid, goal_grid)
+        path_grid = self.a_star(start, goal)
         if path_grid is None:
-            self.get_logger().info("No path found")
             goal_handle.abort()
-            return None
+            return Plan.Result()
 
-        # convert grid path to world coordinates
-        path = [self.from_grid(p) for p in path_grid]
-
-        # create Path message
         path_msg = Path()
-        path_msg.header.frame_id = "odom"
-        for point in path:
-            pose = PoseStamped()
-            pose.pose.position = point
-            path_msg.poses.append(pose)
+        path_msg.header.frame_id = 'odom'
+        path_msg.header.stamp = self.get_clock().now().to_msg()
+
+        for p in path_grid:
+            ps = PoseStamped()
+            ps.header = path_msg.header
+            ps.pose.position = self.from_grid(p)
+            path_msg.poses.append(ps)
 
         self.path_pub.publish(path_msg)
 
         result = Plan.Result()
         result.path = path_msg
         goal_handle.succeed()
-        self.get_logger().info("Path planned successfully")
         return result
 
-    # A* algorithm
+    # A*
     def a_star(self, start, goal):
         open_set = []
-        heapq.heappush(open_set, (0, start))
+        heapq.heappush(open_set, (0.0, start))
+
         came_from = {}
-        g_score = {start: 0}
+        g_score = {start: 0.0}
+        closed = set()
 
         moves = [
             (1,0,1), (-1,0,1), (0,1,1), (0,-1,1),
@@ -96,8 +124,15 @@ class Planner(LifecycleNode):
             (1,-1,math.sqrt(2)), (-1,-1,math.sqrt(2))
         ]
 
+        weight = self.get_parameter('obstacle_weight').value
+
         while open_set:
-            current_f, current = heapq.heappop(open_set)
+            _, current = heapq.heappop(open_set)
+
+            if current in closed:
+                continue
+            closed.add(current)
+
             if current == goal:
                 path = []
                 while current in came_from:
@@ -108,17 +143,22 @@ class Planner(LifecycleNode):
                 return path
 
             x, y = current
-            for dx, dy, cost in moves:
+            for dx, dy, move_cost in moves:
                 nx, ny = x + dx, y + dy
-                if not self.is_valid(nx, ny) or self.is_obstacle(nx, ny):
+                cell_cost = self.get_cell_cost(nx, ny)
+
+                if cell_cost >= 100:
                     continue
+
                 neighbor = (nx, ny)
+                cost = move_cost + (cell_cost / 100.0) * weight
                 tentative_g = g_score[current] + cost
+
                 if neighbor not in g_score or tentative_g < g_score[neighbor]:
                     came_from[neighbor] = current
                     g_score[neighbor] = tentative_g
-                    f_score = tentative_g + self.heuristic(neighbor, goal)
-                    heapq.heappush(open_set, (f_score, neighbor))
+                    f = tentative_g + self.heuristic(neighbor, goal)
+                    heapq.heappush(open_set, (f, neighbor))
 
         return None
 
@@ -127,78 +167,49 @@ class Planner(LifecycleNode):
         dy = a[1] - b[1]
         return math.sqrt(dx*dx + dy*dy)
 
-    def is_valid(self, grid_x, grid_y):
+    def get_cell_cost(self, x, y):
         if self.current_costmap is None:
-            return False
-        return 0 <= grid_x < self.current_costmap.info.width and 0 <= grid_y < self.current_costmap.info.height
+            return 100
 
-    def is_obstacle(self, grid_x, grid_y):
-        if not self.is_valid(grid_x, grid_y):
-            return True
-        width = self.current_costmap.info.width
-        idx = int(grid_y * width + grid_x)
-        if idx < len(self.current_costmap.data):
-            return self.current_costmap.data[idx] == 100
-        return True
+        w = self.current_costmap.info.width
+        h = self.current_costmap.info.height
+        if x < 0 or y < 0 or x >= w or y >= h:
+            return 100
+
+        idx = y * w + x
+        if idx >= len(self.current_costmap.data):
+            return 100
+
+        value = self.current_costmap.data[idx]
+        if value < 0:
+            return 50
+        return value
 
     # grid conversion
     def to_grid(self, pos):
-        res = self.get_parameter('path_resolution').value
-        return (int(pos[0] / res), int(pos[1] / res))
+        origin = self.current_costmap.info.origin.position
+        res = self.current_costmap.info.resolution
+        return (
+            int((pos[0] - origin.x) / res),
+            int((pos[1] - origin.y) / res)
+        )
 
     def from_grid(self, grid):
-        res = self.get_parameter('path_resolution').value
-        pt = Point()
-        pt.x = grid[0] * res
-        pt.y = grid[1] * res
-        pt.z = 0.0
-        return pt
+        origin = self.current_costmap.info.origin.position
+        res = self.current_costmap.info.resolution
+        p = Point()
+        p.x = origin.x + grid[0] * res
+        p.y = origin.y + grid[1] * res
+        p.z = 0.0
+        return p
 
-    # lifecycle callbacks
-    def on_configure(self, state):
-        self.get_logger().info("Configuring planner...")
-        return TransitionCallbackReturn.SUCCESS
-
-    def on_activate(self, state):
-        self.get_logger().info("Planner activated - ready for goals")
-        return TransitionCallbackReturn.SUCCESS
-
-    def on_deactivate(self, state):
-        self.get_logger().info("Planner deactivated")
-        return TransitionCallbackReturn.SUCCESS
-
-    def on_cleanup(self, state):
-        self.get_logger().info("Cleaning up planner...")
-        if self.action_server:
-            self.action_server.destroy()
-        return TransitionCallbackReturn.SUCCESS
-
-    def on_shutdown(self, state):
-        self.get_logger().info("Shutting down planner...")
-        return TransitionCallbackReturn.SUCCESS
 
 def main(args=None):
     rclpy.init(args=args)
-    
-    # Create planner node
     planner = Planner()
-    
-    # Use regular Node execution
-    executor = rclpy.executors.SingleThreadedExecutor()
-    executor.add_node(planner)
-    
-    try:
-        planner.trigger_configure()
-        planner.trigger_activate()
-        
-        # Spin
-        executor.spin()
-    except KeyboardInterrupt:
-        pass
-    finally:
-        executor.shutdown()
-        planner.destroy_node()
-        rclpy.shutdown()
+    rclpy.spin(planner)
+    rclpy.shutdown()
+
 
 if __name__ == '__main__':
     main()
