@@ -19,7 +19,7 @@ class PathControl(LifecycleNode):
         self.ki_linear = 0.1
         self.kd_linear = 0.2
 
-        self.kp_angular = 3.0
+        self.kp_angular = 2.0
         self.ki_angular = 0.0
         self.kd_angular = 0.3
 
@@ -40,13 +40,13 @@ class PathControl(LifecycleNode):
     def on_configure(self, state: LifecycleState):
         self.cmd_pub = self.create_lifecycle_publisher(Twist, '/cmd_vel', 10)
         self.odom_sub = self.create_subscription(Odometry, '/odom', self.odom_callback, 10)
-        self.control_server = ActionServer(self, Control, 'control', self.execute_callback)
         self.goal_reached = False
-        self.time_prev = self.get_clock().now()
         return TransitionCallbackReturn.SUCCESS
 
     def on_activate(self, state: LifecycleState):
         self.cmd_pub.activate()
+        self.control_server = ActionServer(self, Control, 'control', self.execute_callback)
+        self.time_prev = self.get_clock().now()
         return TransitionCallbackReturn.SUCCESS
 
     def on_deactivate(self, state: LifecycleState):
@@ -100,7 +100,7 @@ class PathControl(LifecycleNode):
 
     def control(self, x, y, yaw):
         now = self.get_clock().now()
-        dt = (now - self.time_prev).nanoseconds * 1e-9
+        dt = (now - self.time_prev)
         self.time_prev = now
 
         if dt <= 0.0:
