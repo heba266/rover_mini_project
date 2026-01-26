@@ -1,0 +1,7 @@
+Metadata-Version: 2.1
+Name: wheel-odometry-pkg
+Version: 0.0.1
+Summary: Wheel odometry node for robot localization
+Maintainer: Your Name
+Maintainer-email: your-email@example.com
+License: Apache-2.0
