@@ -7,13 +7,13 @@
   <maintainer email="abdo@todo.todo">abdo</maintainer>
   <license>TODO: License declaration</license>
   
-  <plugin filename="libgz-sim-diff-drive-system.so"
+  <!-- <plugin filename="libgz-sim-diff-drive-system.so"
         name="gz::sim::systems::DiffDrive">
   <left_joint>wheel_left_joint</left_joint>
   <right_joint>wheel_right_joint</right_joint>
   <odom_topic>odom</odom_topic>
   <cmd_vel_topic>cmd_vel</cmd_vel_topic>
-</plugin>
+</plugin> -->
 
 
   <depend>rclpy</depend>
