@@ -23,13 +23,13 @@ class Planner(LifecycleNode):
 
     # callbacks
     def costmap_callback(self, msg):
-        if self.current_state().label != 'active':
-            return;
+        if not (self.path_pub and self.path_pub.is_activated): 
+            return
         self.current_costmap = msg
 
     def odom_callback(self, msg):
-        if self.current_state().label != 'active':
-            return;
+        if not (self.path_pub and self.path_pub.is_activated): 
+            return
         self.current_pose = msg.pose.pose
 
     # lifecycle
@@ -46,7 +46,7 @@ class Planner(LifecycleNode):
         return TransitionCallbackReturn.SUCCESS
 
     def on_activate(self, state):
-        self.path_pub = self.create_lifecycle_publisher(Path,'/planner',10)
+        self.path_pub.on_activate(state)
 
         self.action_server = ActionServer(self, Plan, 'plan', self.execute_callback)
 
@@ -70,10 +70,10 @@ class Planner(LifecycleNode):
 
     # action
     def execute_callback(self, goal_handle):
-        if self.current_state().label != 'active':
+        if not (self.path_pub and self.path_pub.is_activated):
             goal_handle.abort()
             self.get_logger().info("Goal rejected : planner not active")
-            return Plan.Result();
+            return Plan.Result()
         if self.current_costmap is None or self.current_pose is None:
             goal_handle.abort()
             return Plan.Result()

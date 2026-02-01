@@ -1,3 +1,0 @@
-[console_scripts]
-turtlebot4_converter = wheel_odometry_pkg.turtlebot4_converter:main
-wheel_odometry_node = wheel_odometry_pkg.wheel_odometry_node:main

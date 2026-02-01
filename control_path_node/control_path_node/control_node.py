@@ -1,7 +1,7 @@
 import rclpy
 from rclpy.node import Node
 from nav_msgs.msg import OccupancyGrid, Odometry
-from geometry_msgs.msg import Twist
+from geometry_msgs.msg import Twist, TwistStamped
 import math
 import numpy as np
 
@@ -22,7 +22,7 @@ class ReactiveNavigator(Node):
         self.create_subscription(OccupancyGrid, '/costmap', self.costmap_cb, 10)
 
         
-        self.cmd_pub = self.create_publisher(Twist, '/cmd_vel', 10)
+        self.cmd_pub = self.create_publisher(TwistStamped, '/cmd_vel', 10)
 
         
         self.timer = self.create_timer(0.1, self.control_loop)
@@ -68,11 +68,16 @@ class ReactiveNavigator(Node):
         vy = att_y + rep_y
 
         
-        cmd = Twist()
-        cmd.linear.x = 0.5 * math.sqrt(vx * vx + vy * vy)
-        cmd.angular.z = math.atan2(vy, vx)
+        twist = TwistStamped()
+        twist.header.stamp = self.get_clock().now().to_msg()
+        twist.header.frame_id = "odom"
+        twist.twist.linear.x = 0.5 * math.sqrt(vx * vx + vy * vy)
+        twist.twist.angular.z = math.atan2(vy, vx)
+        # cmd = Twist()
+        # cmd.linear.x = 0.5 * math.sqrt(vx * vx + vy * vy)
+        # cmd.angular.z = math.atan2(vy, vx)
 
-        self.cmd_pub.publish(cmd)
+        self.cmd_pub.publish(twist)
 
     
     def compute_repulsion(self, rx, ry):
@@ -96,7 +101,7 @@ class ReactiveNavigator(Node):
                     continue
 
                 idx = j * width + i
-                if self.costmap.data[idx] == 100:
+                if self.costmap.data[idx] >= 50:
                     ox = origin.x + i * res
                     oy = origin.y + j * res
                     dist = math.sqrt((rx - ox)**2 + (ry - oy)**2)
